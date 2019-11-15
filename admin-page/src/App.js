@@ -44,11 +44,8 @@ class App extends Component {
     this.clearVotes = this.clearVotes.bind(this);
   }
 
-  handleStateChange(starting) {
-    this.setState({ starting: starting }, () =>
-      console.log(`Vote State:`, this.state.starting)
-    );
-  }
+  //change handlers
+
   handleModifyChange(event) {
     this.setState({ modify_number: event.target.value });
   }
@@ -67,10 +64,58 @@ class App extends Component {
       console.log(`Option selected:`, this.state.selected_option)
     );
   };
+  handleStateChange(starting) {
+    this.setState({ starting: starting }, () =>
+      console.log(`Vote State:`, this.state.starting)
+    );
+    var time = 1;
+    var interval = setInterval(function() {
+      if (time <= 120) {
+        this.getCurrentVote();
+        time++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 500);
+  }
+
+  //api calls
+  getCurrentVote() {
+    var url = "http://localhost:9898/currentVotes";
+    axios.get(url).then(res => {
+      console.log(res);
+      this.setState({
+        votes_A: res.votes_A,
+        votes_B: res.votes_B,
+        votes_C: res.votes_C,
+        votes_D: res.votes_D
+      });
+    });
+  }
+
+  putVote(votes) {
+    var url = "http://localhost:9898/modifyVotes";
+    axios.put(url, votes).then(res => {
+      console.log(res);
+      console.log("votes updated");
+    });
+  }
+
+  putVotingMode(mode) {
+    var url = "http://localhost:9898/changeMode";
+    axios.put(url, mode).then(res => {
+      console.log(res);
+      console.log("voting mode updated");
+    });
+  }
+
+  //button changes
   updateOption() {
     console.log("Option Updated: ");
     console.log(this.state.selected_option);
+    this.putVotingMode(this.state.selected_option);
   }
+
   updateModify() {
     console.log("Votes Modified");
     console.log(this.state.selected_action);
@@ -133,10 +178,22 @@ class App extends Component {
       this.state.votes_C,
       this.state.votes_D
     );
+    this.putVote({
+      votes_A: this.state.votes_A,
+      votes_B: this.state.votes_B,
+      votes_C: this.state.votes_C,
+      votes_D: this.state.votes_D
+    });
   }
   clearVotes() {
     console.log("Votes Cleared");
     this.setState({
+      votes_A: 0,
+      votes_B: 0,
+      votes_C: 0,
+      votes_D: 0
+    });
+    this.putVote({
       votes_A: 0,
       votes_B: 0,
       votes_C: 0,
