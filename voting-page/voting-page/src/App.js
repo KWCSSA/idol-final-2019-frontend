@@ -31,7 +31,9 @@ class App extends Component {
         axios.get("/currentMode"),
         axios.get("/currentState")])
       .then(axios.spread((firstResponse, secondResponse) => {  
-        this.setState({mode: firstResponse.data.value, state: secondResponse.data.state});
+        if (this.state.mode !== firstResponse.data.value || this.state.state !== firstResponse.data.value){
+          this.setState({mode: firstResponse.data.value, state: firstResponse.data.value});
+        }
       }))
     }
   }
@@ -54,7 +56,7 @@ class App extends Component {
       if (this.state.state === true){
         axios({
           method: 'post',
-          url: "/vote", // change here
+          url: "/voteCandidate", // change here
           data: {
             id: this.state.id,
             matchID: this.state.matchID,
@@ -84,12 +86,13 @@ class App extends Component {
       }
     }).then(res => {
       if (res.data.login === true){
-        cookie.save('id', this.state.id, { path: '/' })
+        cookie.save('id', this.state.id, { path: '/' });
         this.setState({hidden: true});
       } else {
         alert("ID is not valid");
       }
     });
+    if (!cookie.load('id')) alert("ID not accepted");
   }
 
   idChange(e){
@@ -100,7 +103,8 @@ class App extends Component {
   render(){
     return (
       <div>
-        <Login hidden={this.state.hidden} idSubmit={this.idSubmit} idChange={this.idChange} id={this.state.id} msg={this.state.msg}/>
+        <div id="textMessage" text={this.state.msg} />
+        <Login hidden={this.state.hidden} idSubmit={this.idSubmit} idChange={this.idChange} id={this.state.id}/>
         <Body hidden={!this.state.hidden} handleChange={this.handleChange} />
       </div>
     );
@@ -116,7 +120,6 @@ class Body extends Component {
       <div className={this.props.hidden ? 'hidden' : 'App'}>
         <header id="title"><strong>Waterloo Idol Final 2019 Voting Page</strong></header>
         <div className="row">
-          <div id="textMessage" text={this.props.msg} />
         </div>
         <div className="row">
           <button className="voting-button" onClick={this.props.handleChange} id="1">1</button>
