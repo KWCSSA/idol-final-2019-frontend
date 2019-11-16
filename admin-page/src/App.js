@@ -5,6 +5,8 @@ import "./App.css";
 
 import axios from "axios";
 
+const url = "http://localhost:9898";
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -65,24 +67,23 @@ class App extends Component {
     );
   };
   handleStateChange(starting) {
-    this.setState({ starting: starting }, () =>
-      console.log(`Vote State:`, this.state.starting)
-    );
-    var time = 1;
-    var interval = setInterval(function() {
-      if (time <= 120) {
-        this.getCurrentVote();
-        time++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 500);
+    this.setState({ starting: starting }, () => {
+      console.log(`Vote State:`, this.state.starting);
+      var time = 1;
+      var interval = setInterval(function() {
+        if (time <= 120) {
+          this.getCurrentVote();
+          time++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 500);
+    });
   }
 
   //api calls
   getCurrentVote() {
-    var url = "http://localhost:9898/currentVotes";
-    axios.get(url).then(res => {
+    axios.get(url + "/currentVotes").then(res => {
       console.log(res);
       this.setState({
         votes_A: res.votes_A,
@@ -94,16 +95,14 @@ class App extends Component {
   }
 
   putVote(votes) {
-    var url = "http://localhost:9898/modifyVotes";
-    axios.put(url, votes).then(res => {
+    axios.put(url + "/modifyVotes", votes).then(res => {
       console.log(res);
       console.log("votes updated");
     });
   }
 
   putVotingMode(mode) {
-    var url = "http://localhost:9898/changeMode";
-    axios.put(url, mode).then(res => {
+    axios.put(url + "/changeMode", mode).then(res => {
       console.log(res);
       console.log("voting mode updated");
     });
