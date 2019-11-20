@@ -3,6 +3,8 @@ import axios from 'axios';
 import cookie from 'react-cookies'
 import './App.css';
 
+const url = "http://localhost:9898";
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -24,17 +26,17 @@ class App extends Component {
   }
 
   componentDidMount() {
+    var self = this;
     setInterval(getInfo, 500);
-
     function getInfo() {
-      axios.all([
-        axios.get("/currentMode"),
-        axios.get("/currentState")])
-      .then(axios.spread((firstResponse, secondResponse) => {  
-        if (this.state.mode !== firstResponse.data.value || this.state.state !== firstResponse.data.value){
-          this.setState({mode: firstResponse.data.value, state: firstResponse.data.value});
-        }
-      }))
+      axios.get(url + "/currentMode")
+        .then((res) => {
+          self.setState({mode: res.data[0].value});
+          return axios.get(url + "/currentStatus");
+        }).then((res) => {
+          self.setState({state: res.data.state});
+          // console.log(res.data);
+        });
     }
   }
 
@@ -46,33 +48,23 @@ class App extends Component {
     var id = event.target.id;
     if (id === "1" || id === "2" || id === "3" || id === "4"){
       this.setState({voteCandidate: id});
-      if (this.state.mode === "1/2") {
-        if (id === "3" || id === "4") this.setState({voteSuccess: false});
-      }
-      if (this.state.mode === "1/3"){
-        if (id === "4") this.setState({voteSuccess: false});
-      }
     } else if (id === "vote"){
-      if (this.state.state === true){
-        axios({
-          method: 'post',
-          url: "/voteCandidate", // change here
-          data: {
-            id: this.state.id,
-            matchID: this.state.matchID,
-            candidate: this.state.voteCandidate,
-            time: Date.now()
-          }
-        }).then(res => {
-          if (res.data === true) {
-            alert("投票成功！");
-          } else {
-            alert("投票失败");
-          }
-        }); 
-      } else {
-        alert("投票失败");
-      }
+      axios({
+        method: 'post',
+        url: url + "/voteCandidate", // change here
+        data: {
+          id: cookie.load('id'),
+          matchID: this.state.matchID,
+          candidate: this.state.voteCandidate,
+          time: Date.now()
+        }
+      }).then(res => {
+        if (res.data.status === "success") {
+          alert("投票成功！");
+        } else {
+          alert("投票失败" + res.data.status);
+        }
+      }); 
     }
   }
 
@@ -80,19 +72,21 @@ class App extends Component {
     e.preventDefault();
     axios({
       method: 'post',
-      url: "/login", // change here
+      url: url + "/login", // change here
       data: {
         id: this.state.id
       }
     }).then(res => {
-      if (res.data.login === true){
+      console.log(res.data);
+      if (res.data.status === "success"){
         cookie.save('id', this.state.id, { path: '/' });
         this.setState({hidden: true});
-      } else {
-        alert("ID is not valid");
+      } else if (res.data.status === "id not found"){
+        alert("ID is not found");
+      } else if (res.data.status === "already logged in"){
+        alert("already logged in");
       }
     });
-    if (!cookie.load('id')) alert("ID not accepted");
   }
 
   idChange(e){
@@ -103,7 +97,7 @@ class App extends Component {
   render(){
     return (
       <div>
-        <div id="textMessage" text={this.state.msg} />
+        {/* <div id="textMessage" text={this.state.msg} /> */}
         <Login hidden={this.state.hidden} idSubmit={this.idSubmit} idChange={this.idChange} id={this.state.id}/>
         <Body hidden={!this.state.hidden} handleChange={this.handleChange} />
       </div>
