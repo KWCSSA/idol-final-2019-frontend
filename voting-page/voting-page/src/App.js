@@ -27,16 +27,20 @@ class App extends Component {
 
   componentDidMount() {
     var self = this;
-    setInterval(getInfo, 500);
+    // setInterval(getInfo, 500);
+    getInfo();
     function getInfo() {
       axios.get(url + "/currentMode")
         .then((res) => {
-          self.setState({mode: res.data[0].value});
+          self.setState({mode: res.data[0].value}, () => (console.log(res.data[0].value)));
           return axios.get(url + "/currentStatus");
         }).then((res) => {
-          self.setState({state: res.data.state});
+          self.setState({state: res.data.state}, () => (console.log(res.data.state)));
           // console.log(res.data);
-        });
+          return axios.get(url + "/currentMatch");
+        }).then((res) => {
+          self.setState({match: res.data.currentMatch}, ()=> {console.log(res.data.currentMatch)});
+        })
     }
   }
 
@@ -60,9 +64,11 @@ class App extends Component {
         }
       }).then(res => {
         if (res.data.status === "success") {
+          console.log(res.data);
           alert("投票成功！");
         } else {
-          alert("投票失败" + res.data.status);
+          console.log(res.data);
+          alert("投票失败");
         }
       }); 
     }
